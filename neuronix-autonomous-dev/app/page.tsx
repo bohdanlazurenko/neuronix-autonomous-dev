@@ -3,7 +3,15 @@
 import { useState } from "react";
 import BriefForm from "./components/BriefForm";
 import ResultCard from "./components/ResultCard";
+import ProgressTracker from "./components/ProgressTracker";
 import { Sparkles } from "lucide-react";
+
+interface ProgressStep {
+  phase: string;
+  label: string;
+  status: "pending" | "in-progress" | "complete";
+  message?: string;
+}
 
 export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -12,11 +20,35 @@ export default function Home() {
     deploymentUrl: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([
+    { phase: "brief", label: "Validate Brief", status: "pending" },
+    { phase: "prd", label: "Generate Product Requirements", status: "pending" },
+    { phase: "implementation", label: "Create Implementation Plan", status: "pending" },
+    { phase: "code", label: "Generate Code", status: "pending" },
+    { phase: "deploy", label: "Deploy to Vercel", status: "pending" },
+  ]);
+
+  const updateStepStatus = (phase: string, status: "pending" | "in-progress" | "complete", message?: string) => {
+    setProgressSteps((prev) =>
+      prev.map((step) =>
+        step.phase === phase ? { ...step, status, message } : step
+      )
+    );
+  };
 
   const handleSubmit = async (brief: string, language?: "en" | "ru") => {
     setIsSubmitting(true);
     setError(null);
     setResult(null);
+    
+    // Reset progress
+    setProgressSteps([
+      { phase: "brief", label: "Validate Brief", status: "pending" },
+      { phase: "prd", label: "Generate Product Requirements", status: "pending" },
+      { phase: "implementation", label: "Create Implementation Plan", status: "pending" },
+      { phase: "code", label: "Generate Code", status: "pending" },
+      { phase: "deploy", label: "Deploy to Vercel", status: "pending" },
+    ]);
 
     try {
       const response = await fetch("/api/create", {
@@ -48,18 +80,28 @@ export default function Home() {
 
         for (const line of lines) {
           if (line.startsWith("data: ")) {
-            const data = JSON.parse(line.slice(6));
+            try {
+              const data = JSON.parse(line.slice(6));
 
-            if (data.error) {
-              setError(data.error.message || "An error occurred");
-              break;
-            }
+              if (data.error) {
+                setError(data.error.message || "An error occurred");
+                break;
+              }
 
-            if (data.type === "complete" && data.artifact) {
-              setResult({
-                repositoryUrl: "https://github.com/demo/sample-project",
-                deploymentUrl: data.artifact.data.url,
-              });
+              // Update progress based on event type
+              if (data.type === "phase_start") {
+                updateStepStatus(data.phase, "in-progress", data.message);
+              } else if (data.type === "phase_complete") {
+                updateStepStatus(data.phase, "complete", data.message);
+              } else if (data.type === "complete" && data.artifact) {
+                updateStepStatus("deploy", "complete", "Deployment ready!");
+                setResult({
+                  repositoryUrl: "https://github.com/demo/sample-project",
+                  deploymentUrl: data.artifact.data.url,
+                });
+              }
+            } catch (parseError) {
+              console.error("Failed to parse SSE data:", parseError);
             }
           }
         }
@@ -88,6 +130,8 @@ export default function Home() {
         </div>
 
         <BriefForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+
+        {isSubmitting && <ProgressTracker steps={progressSteps} />}
 
         {error && (
           <div className="mt-8 p-4 bg-red-900/20 border border-red-700 rounded-lg text-red-400">
