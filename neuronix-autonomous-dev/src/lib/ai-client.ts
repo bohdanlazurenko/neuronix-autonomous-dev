@@ -162,11 +162,13 @@ export class AIClient {
     options?: { temperature?: number; maxTokens?: number }
   ): Promise<AIResponse> {
     // Z.AI API implementation with correct endpoint
+    // Note: Z.AI may use either 'Authorization: Bearer' or 'api-key' header
     const response = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${this.apiKey}`,
+        "api-key": this.apiKey, // Some Z.AI endpoints use this format
       },
       body: JSON.stringify({
         model: "deepseek-chat",
@@ -176,12 +178,14 @@ export class AIClient {
         })),
         temperature: options?.temperature || 0.7,
         max_tokens: options?.maxTokens || 4000,
+        stream: false,
       }),
     });
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`Z.AI API error: ${error}`);
+      console.error(`Z.AI API error (${response.status}):`, error);
+      throw new Error(`Z.AI API error (${response.status}): ${error}`);
     }
 
     const data = await response.json();
