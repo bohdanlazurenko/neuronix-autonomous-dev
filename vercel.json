@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd neuronix-autonomous-dev && npm run build",
+  "devCommand": "cd neuronix-autonomous-dev && npm run dev",
+  "installCommand": "cd neuronix-autonomous-dev && npm install",
+  "framework": "nextjs",
+  "outputDirectory": "neuronix-autonomous-dev/.next"
+}
