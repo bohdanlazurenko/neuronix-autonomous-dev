@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         keepAliveInterval = setInterval(() => {
           try {
             controller.enqueue(encoder.encode(': keep-alive\n\n'));
-          } catch (e) {
+          } catch {
             if (keepAliveInterval) clearInterval(keepAliveInterval);
           }
         }, 5000);
