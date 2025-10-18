@@ -23,7 +23,7 @@ export default function Home() {
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([
     { phase: "brief", label: "Validate Brief", status: "pending" },
     { phase: "prd", label: "Generate Product Requirements", status: "pending" },
-    { phase: "implementation", label: "Create Implementation Plan", status: "pending" },
+    { phase: "plan", label: "Create Implementation Plan", status: "pending" },
     { phase: "code", label: "Generate Code", status: "pending" },
     { phase: "deploy", label: "Deploy to Vercel", status: "pending" },
   ]);
@@ -45,7 +45,7 @@ export default function Home() {
     setProgressSteps([
       { phase: "brief", label: "Validate Brief", status: "pending" },
       { phase: "prd", label: "Generate Product Requirements", status: "pending" },
-      { phase: "implementation", label: "Create Implementation Plan", status: "pending" },
+      { phase: "plan", label: "Create Implementation Plan", status: "pending" },
       { phase: "code", label: "Generate Code", status: "pending" },
       { phase: "deploy", label: "Deploy to Vercel", status: "pending" },
     ]);

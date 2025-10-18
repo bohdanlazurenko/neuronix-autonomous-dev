@@ -6,7 +6,7 @@
  */
 
 import { BaseAgent, AgentContext, AgentResult } from "@/src/agents/base";
-import { ProgressEvent } from "@/src/types/contracts";
+import { ProgressEvent, Phase } from "@/src/types/contracts";
 import { AppError, ErrorCode } from "./errors";
 
 export interface OrchestratorConfig {
@@ -70,12 +70,12 @@ export class AgentOrchestrator {
         const agentName = agent.getName();
 
         // Determine phase name for progress events
-        const phaseMap: Record<string, string> = {
+        const phaseMap: Record<string, Phase> = {
           "PMAgent": "prd",
-          "DevAgent": "implementation",
+          "DevAgent": "plan",
           "IntegrationAgent": "deploy",
         };
-        const phaseName = phaseMap[agentName] || "unknown";
+        const phaseName = phaseMap[agentName] || "prd";
 
         // Check timeout
         if (Date.now() - startTime > this.timeout) {
