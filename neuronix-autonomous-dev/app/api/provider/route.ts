@@ -4,6 +4,8 @@
  * Returns information about which AI provider is currently configured
  */
 
+export const runtime = 'edge';
+
 import { NextResponse } from "next/server";
 import { AIClient } from "@/src/lib/ai-client";
 

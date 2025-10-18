@@ -5,6 +5,9 @@
  * Accepts project briefs and streams progress via SSE
  */
 
+export const runtime = 'edge';
+export const maxDuration = 300; // 5 minutes
+
 import { NextRequest } from "next/server";
 import { validateBrief } from "@/src/lib/validation";
 import { createValidationError, handleError } from "@/src/lib/errors";
