@@ -4,21 +4,22 @@
  * Generates source code based on implementation plan
  */
 
-import Anthropic from "@anthropic-ai/sdk";
 import { BaseAgent, AgentContext, AgentResult } from "./base";
+import { AIClient } from "@/src/lib/ai-client";
 
 export class DevAgent extends BaseAgent {
-  private client: Anthropic;
+  private client: AIClient;
 
   constructor() {
     super("DevAgent");
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error("ANTHROPIC_API_KEY environment variable is required");
+    try {
+      this.client = new AIClient();
+    } catch {
+      throw new Error(
+        "AI API key required. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or ZAI_API_KEY"
+      );
     }
-
-    this.client = new Anthropic({ apiKey });
   }
 
   async execute(context: AgentContext): Promise<AgentResult> {

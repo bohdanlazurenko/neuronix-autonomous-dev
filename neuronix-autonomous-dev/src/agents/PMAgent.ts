@@ -4,25 +4,26 @@
  * Analyzes user briefs and generates Product Requirements Documents (PRD)
  */
 
-import Anthropic from "@anthropic-ai/sdk";
 import { BaseAgent, AgentContext, AgentResult } from "./base";
 import {
   ProductRequirementsDocument,
   ImplementationPlan,
 } from "@/src/types/contracts";
+import { AIClient } from "@/src/lib/ai-client";
 
 export class PMAgent extends BaseAgent {
-  private client: Anthropic;
+  private client: AIClient;
 
   constructor() {
     super("PMAgent");
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error("ANTHROPIC_API_KEY environment variable is required");
+    try {
+      this.client = new AIClient();
+    } catch {
+      throw new Error(
+        "AI API key required. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or ZAI_API_KEY"
+      );
     }
-
-    this.client = new Anthropic({ apiKey });
   }
 
   async execute(context: AgentContext): Promise<AgentResult> {
@@ -77,18 +78,12 @@ Generate a JSON response with this structure:
 
 Respond ONLY with valid JSON, no markdown or explanations.`;
 
-    const message = await this.client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2048,
-      messages: [{ role: "user", content: prompt }],
-    });
+    const response = await this.client.chat(
+      [{ role: "user", content: prompt }],
+      { maxTokens: 2048 }
+    );
 
-    const content = message.content[0];
-    if (content.type !== "text") {
-      throw new Error("Unexpected response type from Claude");
-    }
-
-    const prdData = JSON.parse(content.text);
+    const prdData = JSON.parse(response.content);
 
     return {
       id: crypto.randomUUID(),
@@ -133,18 +128,12 @@ Generate a JSON response with this structure:
 
 Respond ONLY with valid JSON.`;
 
-    const message = await this.client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      messages: [{ role: "user", content: prompt }],
-    });
+    const response = await this.client.chat(
+      [{ role: "user", content: prompt }],
+      { maxTokens: 4096 }
+    );
 
-    const content = message.content[0];
-    if (content.type !== "text") {
-      throw new Error("Unexpected response type from Claude");
-    }
-
-    const planData = JSON.parse(content.text);
+    const planData = JSON.parse(response.content);
 
     return {
       id: crypto.randomUUID(),
