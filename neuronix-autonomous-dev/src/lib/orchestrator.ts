@@ -67,6 +67,15 @@ export class AgentOrchestrator {
       // Execute agents sequentially
       for (let i = 0; i < this.agents.length; i++) {
         const agent = this.agents[i];
+        const agentName = agent.getName();
+
+        // Determine phase name for progress events
+        const phaseMap: Record<string, string> = {
+          "PMAgent": "prd",
+          "DevAgent": "implementation",
+          "IntegrationAgent": "deploy",
+        };
+        const phaseName = phaseMap[agentName] || "unknown";
 
         // Check timeout
         if (Date.now() - startTime > this.timeout) {
@@ -87,6 +96,20 @@ export class AgentOrchestrator {
           );
         }
 
+        // Send phase start event
+        if (this.onProgress) {
+          const progressPercent = 10 + (i * 30); // 10, 40, 70
+          this.onProgress({
+            id: crypto.randomUUID(),
+            type: "phase_start",
+            projectId: config.projectId,
+            phase: phaseName,
+            progress: progressPercent,
+            message: `${agentName} starting...`,
+            timestamp: new Date().toISOString(),
+          });
+        }
+
         // Execute agent with retry logic
         const result = await this.executeWithRetry(agent, context);
 
@@ -95,6 +118,20 @@ export class AgentOrchestrator {
             success: false,
             error: result.error || `Agent ${agent.getName()} failed`,
           };
+        }
+
+        // Send phase complete event
+        if (this.onProgress) {
+          const progressPercent = 30 + (i * 30); // 30, 60, 90
+          this.onProgress({
+            id: crypto.randomUUID(),
+            type: "phase_complete",
+            projectId: config.projectId,
+            phase: phaseName,
+            progress: progressPercent,
+            message: `${agentName} completed`,
+            timestamp: new Date().toISOString(),
+          });
         }
 
         // Pass result to next agent via context

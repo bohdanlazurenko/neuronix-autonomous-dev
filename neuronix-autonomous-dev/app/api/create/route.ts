@@ -66,18 +66,7 @@ export async function POST(request: NextRequest) {
           createProgressEvent(projectId, "phase_complete", "brief", 10, "Brief validated")
         );
 
-        // Execute workflow
-        sendEvent(
-          controller,
-          createProgressEvent(
-            projectId,
-            "phase_start",
-            "prd",
-            10,
-            "PM Agent generating product requirements..."
-          )
-        );
-
+        // Execute workflow (orchestrator will send progress events for each agent)
         const result = await orchestrator.execute({
           projectId,
           brief,
