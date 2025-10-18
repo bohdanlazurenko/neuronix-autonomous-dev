@@ -111,9 +111,12 @@ export class AgentOrchestrator {
         }
 
         // Execute agent with retry logic
+        console.log(`[Orchestrator] Executing ${agentName}...`);
         const result = await this.executeWithRetry(agent, context);
+        console.log(`[Orchestrator] ${agentName} result:`, result.success ? 'SUCCESS' : 'FAILED');
 
         if (!result.success) {
+          console.error(`[Orchestrator] ${agentName} failed:`, result.error);
           return {
             success: false,
             error: result.error || `Agent ${agent.getName()} failed`,
@@ -121,6 +124,7 @@ export class AgentOrchestrator {
         }
 
         // Send phase complete event
+        console.log(`[Orchestrator] Sending phase_complete for ${phaseName}`);
         if (this.onProgress) {
           const progressPercent = 30 + (i * 30); // 30, 60, 90
           this.onProgress({
