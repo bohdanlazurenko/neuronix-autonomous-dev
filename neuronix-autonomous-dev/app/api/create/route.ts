@@ -43,7 +43,18 @@ export async function POST(request: NextRequest) {
 
         const projectId = crypto.randomUUID();
 
+        // Send test event immediately to verify SSE works
+        console.log('[API] Sending immediate test event to verify SSE');
+        sendEvent(
+          controller,
+          createProgressEvent(projectId, "phase_start", "brief", 0, "🔴 TEST: SSE stream just opened!")
+        );
+
+        // Small delay to ensure test event is flushed
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         // Send initial event
+        console.log('[API] Sending initial brief validation event');
         sendEvent(
           controller,
           createProgressEvent(projectId, "phase_start", "brief", 0, "Validating brief...")
