@@ -161,15 +161,15 @@ export class AIClient {
     messages: AIMessage[],
     options?: { temperature?: number; maxTokens?: number }
   ): Promise<AIResponse> {
-    // Z.AI API implementation (similar to OpenAI)
-    const response = await fetch("https://api.z.ai/v1/chat/completions", {
+    // Z.AI API implementation with correct endpoint
+    const response = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify({
-        model: "zai-large",
+        model: "deepseek-chat",
         messages: messages.map(m => ({
           role: m.role,
           content: m.content,
@@ -207,7 +207,7 @@ export class AIClient {
       case "openai":
         return "gpt-4o";
       case "zai":
-        return "zai-large";
+        return "deepseek-chat";
       default:
         return "unknown";
     }
