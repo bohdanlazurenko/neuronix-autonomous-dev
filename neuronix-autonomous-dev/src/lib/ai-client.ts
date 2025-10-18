@@ -161,17 +161,15 @@ export class AIClient {
     messages: AIMessage[],
     options?: { temperature?: number; maxTokens?: number }
   ): Promise<AIResponse> {
-    // Z.AI API implementation with correct endpoint
-    // Note: Z.AI may use either 'Authorization: Bearer' or 'api-key' header
+    // Z.AI API implementation - try without model parameter or use default
     const response = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${this.apiKey}`,
-        "api-key": this.apiKey, // Some Z.AI endpoints use this format
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: "glm-4.6",
         messages: messages.map(m => ({
           role: m.role,
           content: m.content,
@@ -189,13 +187,25 @@ export class AIClient {
     }
 
     const data = await response.json();
+    console.log("[Z.AI Response]:", JSON.stringify(data, null, 2));
+    
+    // Handle different response formats
+    const content = data.choices?.[0]?.message?.content || 
+                   data.choices?.[0]?.text ||
+                   data.content ||
+                   data.output;
+    
+    if (!content) {
+      console.error("[Z.AI] Unexpected response format:", data);
+      throw new Error(`Z.AI returned unexpected format: ${JSON.stringify(data)}`);
+    }
     
     return {
-      content: data.choices[0].message.content,
-      model: data.model,
+      content,
+      model: data.model || "z.ai-default",
       usage: {
-        inputTokens: data.usage.prompt_tokens,
-        outputTokens: data.usage.completion_tokens,
+        inputTokens: data.usage?.prompt_tokens || 0,
+        outputTokens: data.usage?.completion_tokens || 0,
       },
     };
   }
@@ -211,7 +221,7 @@ export class AIClient {
       case "openai":
         return "gpt-4o";
       case "zai":
-        return "deepseek-chat";
+        return "glm-4.6";
       default:
         return "unknown";
     }
