@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
 
         // Set progress callback
         orchestrator.setProgressCallback((event) => {
+          console.log('[API] Progress event received:', event.type, event.phase);
           sendEvent(controller, event);
         });
 
@@ -66,12 +67,14 @@ export async function POST(request: NextRequest) {
           createProgressEvent(projectId, "phase_complete", "brief", 10, "Brief validated")
         );
 
+        console.log('[API] Starting orchestrator.execute()');
         // Execute workflow (orchestrator will send progress events for each agent)
         const result = await orchestrator.execute({
           projectId,
           brief,
           language,
         });
+        console.log('[API] Orchestrator.execute() finished:', result.success);
 
         if (!result.success) {
           sendEvent(
