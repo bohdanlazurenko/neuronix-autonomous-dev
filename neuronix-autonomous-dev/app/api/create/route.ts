@@ -22,8 +22,6 @@ export async function POST(request: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      let keepAliveInterval: ReturnType<typeof setInterval> | null = null;
-      
       try {
         // Parse request body
         const body = await request.json();
@@ -49,9 +47,6 @@ export async function POST(request: NextRequest) {
           controller,
           createProgressEvent(projectId, "phase_start", "brief", 0, "🔴 TEST: SSE stream just opened!")
         );
-
-        // Small delay to ensure test event is flushed
-        await new Promise(resolve => setTimeout(resolve, 100));
 
         // Send initial event
         console.log('[API] Sending initial brief validation event');
@@ -83,15 +78,6 @@ export async function POST(request: NextRequest) {
           createProgressEvent(projectId, "phase_complete", "brief", 10, "Brief validated")
         );
 
-        // Send keep-alive comments every 5 seconds to prevent timeout
-        keepAliveInterval = setInterval(() => {
-          try {
-            controller.enqueue(encoder.encode(': keep-alive\n\n'));
-          } catch {
-            if (keepAliveInterval) clearInterval(keepAliveInterval);
-          }
-        }, 5000);
-
         console.log('[API] Starting orchestrator.execute()');
         // Execute workflow (orchestrator will send progress events for each agent)
         const result = await orchestrator.execute({
@@ -100,8 +86,6 @@ export async function POST(request: NextRequest) {
           language,
         });
         console.log('[API] Orchestrator.execute() finished:', result.success);
-        
-        if (keepAliveInterval) clearInterval(keepAliveInterval);
 
         if (!result.success) {
           sendEvent(
@@ -139,7 +123,6 @@ export async function POST(request: NextRequest) {
 
         controller.close();
       } catch (error) {
-        if (keepAliveInterval) clearInterval(keepAliveInterval);
         const errorResponse = handleError(error);
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify({ error: errorResponse })}\n\n`)
