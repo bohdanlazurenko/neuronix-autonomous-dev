@@ -94,7 +94,7 @@ export class AIClient {
 
     const response = await this.anthropicClient.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: options?.maxTokens || 4000,
+      max_tokens: options?.maxTokens || 8000,
       temperature: options?.temperature || 0.7,
       system: systemMessage?.content,
       messages: conversationMessages.map(m => ({
@@ -136,7 +136,7 @@ export class AIClient {
           content: m.content,
         })),
         temperature: options?.temperature || 0.7,
-        max_tokens: options?.maxTokens || 4000,
+        max_tokens: options?.maxTokens || 8000,
       }),
     });
 
@@ -175,7 +175,7 @@ export class AIClient {
           content: m.content,
         })),
         temperature: options?.temperature || 0.7,
-        max_tokens: options?.maxTokens || 4000,
+        max_tokens: options?.maxTokens || 8000,
         stream: false,
       }),
     });
@@ -190,14 +190,22 @@ export class AIClient {
     console.log("[Z.AI Response]:", JSON.stringify(data, null, 2));
     
     // Handle different response formats
-    const content = data.choices?.[0]?.message?.content || 
-                   data.choices?.[0]?.text ||
-                   data.content ||
-                   data.output;
+    let content = data.choices?.[0]?.message?.content || 
+                  data.choices?.[0]?.text ||
+                  data.content ||
+                  data.output;
     
     if (!content) {
       console.error("[Z.AI] Unexpected response format:", data);
       throw new Error(`Z.AI returned unexpected format: ${JSON.stringify(data)}`);
+    }
+
+    // Extract JSON from markdown code blocks if present
+    // Z.AI sometimes wraps JSON in ```json ... ```
+    const jsonMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+    if (jsonMatch) {
+      content = jsonMatch[1].trim();
+      console.log("[Z.AI] Extracted JSON from markdown block");
     }
     
     return {

@@ -71,9 +71,15 @@ export default function Home() {
         throw new Error("No response body");
       }
 
+      console.log('🔵 [Frontend] SSE stream opened, waiting for events...');
+      let eventCount = 0;
+
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('🔵 [Frontend] Stream ended, total events:', eventCount);
+          break;
+        }
 
         const chunk = decoder.decode(value);
         const lines = chunk.split("\n");
@@ -82,6 +88,8 @@ export default function Home() {
           if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
+              eventCount++;
+              console.log(`🔵 [Frontend] Event ${eventCount}:`, data.type, data.phase, data.message);
 
               if (data.error) {
                 setError(data.error.message || "An error occurred");
@@ -101,7 +109,7 @@ export default function Home() {
                 });
               }
             } catch (parseError) {
-              console.error("Failed to parse SSE data:", parseError);
+              console.error("🔴 [Frontend] Failed to parse SSE data:", parseError);
             }
           }
         }

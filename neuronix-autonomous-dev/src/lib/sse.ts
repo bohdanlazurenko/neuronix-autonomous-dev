@@ -25,9 +25,14 @@ export function sendEvent(
   controller: ReadableStreamDefaultController,
   event: ProgressEvent
 ): void {
-  const encoder = new TextEncoder();
-  const data = `data: ${JSON.stringify(event)}\n\n`;
-  controller.enqueue(encoder.encode(data));
+  try {
+    const encoder = new TextEncoder();
+    const data = `data: ${JSON.stringify(event)}\n\n`;
+    controller.enqueue(encoder.encode(data));
+  } catch (error) {
+    // Controller may already be closed - this is normal for long-running processes
+    console.warn('[SSE] Failed to send event (controller may be closed):', event.type, event.phase);
+  }
 }
 
 /**
